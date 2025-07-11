@@ -4,9 +4,9 @@ import com.google.gson.JsonElement;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -20,18 +20,42 @@ class JsonplaceholderApi {
 
 	public static void postUser(String url, String json) throws IOException {
 
-		Connection.Response executePost = Jsoup
-				.connect(url + "/users")
-				.header("Accept", "application/json")
-				.header("Content-Type", "application/json; charset=UTF-8")
-				.userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-				.requestBody(json)
-				.method(Connection.Method.POST)
-				.ignoreContentType(true)
-				.ignoreHttpErrors(true)
-				.execute();
-		System.out.println("bodyPost = " + executePost.body()); //get answer "body" - new user with "idPost":0
-		System.out.println("executePost.statusCode() = " + executePost.statusCode());
+//		Connection.Response executePost = Jsoup
+//				.connect(url + "/users")
+//				.header("Accept", "application/json")
+//				.header("Content-Type", "application/json; charset=UTF-8")
+//				.requestBody(json)
+//				.method(Connection.Method.POST)
+//				.ignoreContentType(true)
+//				.ignoreHttpErrors(true)
+//				.execute();
+//		System.out.println("bodyPost = " + executePost.body()); //get answer "body" - new user with "idPost":0
+//		System.out.println("executePost.statusCode() = " + executePost.statusCode());
+
+		URL url1 = new URL(url + "/users");
+		HttpURLConnection connection = (HttpURLConnection) url1.openConnection();
+		connection.setRequestMethod("POST");
+		connection.setDoOutput(true);
+		OutputStream outputStream = connection.getOutputStream();
+		outputStream.write(Files.readAllBytes(new File("src/main/resources/json.json").toPath()));
+		outputStream.flush();
+		outputStream.close();
+
+		System.out.println("POST response code: " + connection.getResponseCode());
+		if (connection.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
+			BufferedReader in =
+					new BufferedReader(
+							new InputStreamReader(connection.getInputStream()));
+			StringBuffer response = new StringBuffer();
+			String inputLine;
+			while ((inputLine = in.readLine()) != null) {
+				response.append(inputLine);
+			}
+			in.close();
+			System.out.println(response);
+		} else {
+			System.out.println("Error");
+		}
 	}
 
 	public static void putUser(String url, String json) throws IOException {
